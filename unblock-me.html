@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unblock Me</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --canvas-a: #ffd9ea;
+    --canvas-b: #e6cbff;
+    --canvas-c: #ffe8d9;
+    --ink: #431a3d;
+    --ink-soft: #8a4d78;
+    --yes-a: #ff9a6c;
+    --yes-b: #ff3d77;
+    --no-a: #6b4570;
+    --no-b: #4a1942;
+    --blob-1: #ffb8d9;
+    --blob-2: #c9a6ff;
+    --blob-3: #ffcf9e;
+    --focus: #ff3d77;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: var(--canvas-a);
+  }
+
+  body {
+    font-family: 'Quicksand', 'Segoe UI', sans-serif;
+    color: var(--ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  .scene {
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+    background: linear-gradient(160deg, var(--canvas-a) 0%, var(--canvas-b) 55%, var(--canvas-c) 100%);
+    overflow: hidden;
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(50px);
+    opacity: 0.55;
+    animation: drift 16s ease-in-out infinite;
+  }
+
+  .blob-1 { width: 320px; height: 320px; background: var(--blob-1); top: -80px; left: -60px; animation-duration: 18s; }
+  .blob-2 { width: 260px; height: 260px; background: var(--blob-2); bottom: -60px; right: -40px; animation-duration: 21s; animation-delay: -4s; }
+  .blob-3 { width: 200px; height: 200px; background: var(--blob-3); bottom: 10%; left: 8%; animation-duration: 14s; animation-delay: -8s; }
+
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(24px, -30px) scale(1.08); }
+  }
+
+  /* ---- envelope screen ---- */
+
+  #envelopeScreen {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    text-align: center;
+    padding: 24px;
+    transition: opacity 0.45s ease;
+  }
+
+  #envelopeBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 18px;
+    border-radius: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+
+  #envelopeBtn:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 4px;
+  }
+
+  .envelope-emoji {
+    font-size: clamp(70px, 18vw, 130px);
+    line-height: 1;
+    animation: envBounce 2.6s ease-in-out infinite;
+    filter: drop-shadow(0 10px 20px rgba(67, 26, 61, 0.25));
+  }
+
+  @keyframes envBounce {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-14px) rotate(3deg); }
+  }
+
+  .envelope-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(24px, 4.6vw, 36px);
+    margin: 0;
+  }
+
+  .envelope-hint {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    opacity: 0.85;
+  }
+
+  /* ---- main apology screen ---- */
+
+  .container {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    gap: 28px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .emoji {
+    font-size: clamp(56px, 13vw, 104px);
+    line-height: 1;
+    animation: wobble 2.4s ease-in-out infinite;
+    filter: drop-shadow(0 8px 18px rgba(67, 26, 61, 0.22));
+  }
+
+  @keyframes wobble {
+    0%, 100% { transform: rotate(-4deg); }
+    50% { transform: rotate(4deg); }
+  }
+
+  h1#message {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(22px, 4.2vw, 40px);
+    max-width: 640px;
+    line-height: 1.35;
+    margin: 0;
+    text-wrap: balance;
+    position: relative;
+    z-index: 3;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    position: relative;
+    z-index: 3;
+  }
+
+  button.pill {
+    font-family: 'Quicksand', sans-serif;
+    border: none;
+    border-radius: 999px;
+    padding: 15px 38px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(67, 26, 61, 0.22);
+    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s ease, filter 0.2s ease;
+  }
+
+  button.pill:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  #yesBtn {
+    position: relative;
+    background: linear-gradient(135deg, var(--yes-a), var(--yes-b));
+    color: #fff8f2;
+    box-shadow: 0 10px 24px rgba(67, 26, 61, 0.22), inset 0 2px 0 rgba(255, 255, 255, 0.45);
+  }
+
+  #yesBtn:hover { filter: brightness(1.06); }
+
+  #yesBtn::before,
+  #yesBtn::after {
+    content: '✨';
+    position: absolute;
+    font-size: 15px;
+    animation: twinkle 1.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  #yesBtn::before { top: -10px; left: -8px; }
+  #yesBtn::after { bottom: -10px; right: -8px; animation-delay: 0.8s; }
+
+  @keyframes twinkle {
+    0%, 100% { transform: scale(0.5); opacity: 0.25; }
+    50% { transform: scale(1.15); opacity: 1; }
+  }
+
+  .yes-inner {
+    display: inline-block;
+    animation: cuteBounce 1.8s ease-in-out infinite;
+  }
+
+  @keyframes cuteBounce {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-4px) rotate(2deg); }
+  }
+
+  #noBtn {
+    background: linear-gradient(135deg, var(--no-a), var(--no-b));
+    color: #fbe9f5;
+  }
+
+  #noBtn.roaming {
+    position: fixed;
+    z-index: 50;
+    top: 50%;
+    left: 50%;
+    cursor: default;
+  }
+
+  #noBtn.spinning {
+    animation: spinNo 0.7s linear infinite;
+  }
+
+  @keyframes spinNo {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .hint {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    min-height: 18px;
+    opacity: 0.85;
+    position: relative;
+    z-index: 3;
+  }
+
+  /* ---- ambient sad emojis ---- */
+
+  #sadEmojis {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .sad-emoji {
+    position: absolute;
+    opacity: 0.5;
+    animation-name: floatSad;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes floatSad {
+    0%, 100% { transform: translateY(0) rotate(-8deg); }
+    50% { transform: translateY(-22px) rotate(8deg); }
+  }
+
+  /* ---- celebration ---- */
+
+  #celebration {
+    position: fixed;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 18px;
+    background: linear-gradient(160deg, var(--canvas-a) 0%, var(--canvas-b) 55%, var(--canvas-c) 100%);
+    z-index: 100;
+    padding: 24px;
+  }
+
+  #celebration.show { display: flex; }
+
+  #celebration .big-emoji {
+    font-size: clamp(64px, 16vw, 120px);
+    animation: pop 0.6s ease;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  #celebration h1 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--ink);
+    font-size: clamp(22px, 4.6vw, 38px);
+    max-width: 640px;
+    margin: 0;
+    line-height: 1.4;
+    text-wrap: balance;
+  }
+
+  .heart {
+    position: fixed;
+    top: -40px;
+    font-size: 22px;
+    pointer-events: none;
+    z-index: 99;
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div id="envelopeScreen">
+    <button id="envelopeBtn" type="button" aria-label="Open the message">
+      <span class="envelope-emoji">💌</span>
+      <h1 class="envelope-title">You've got a message</h1>
+      <span class="envelope-hint">Tap the envelope to open it</span>
+    </button>
+  </div>
+
+  <div class="container" id="mainContainer">
+    <div id="sadEmojis"></div>
+    <div class="emoji" id="emoji">😢</div>
+    <h1 id="message">I'm sorry for making you angry and sad. I really am sorry, NANA. Please unblock me 😢</h1>
+    <div class="buttons" id="buttonArea">
+      <button id="yesBtn" class="pill" type="button"><span class="yes-inner">Yes 💗</span></button>
+      <button id="noBtn" class="pill" type="button">No</button>
+    </div>
+    <div class="hint" id="hint"></div>
+  </div>
+
+  <div id="celebration">
+    <div class="big-emoji">🥳❤️</div>
+    <h1>Yay! Thank you for unblocking me.<br>I promise it was worth it.</h1>
+  </div>
+</div>
+
+<script>
+  const envelopeScreen = document.getElementById('envelopeScreen');
+  const envelopeBtn = document.getElementById('envelopeBtn');
+  const mainContainer = document.getElementById('mainContainer');
+  const yesBtn = document.getElementById('yesBtn');
+  const noBtn = document.getElementById('noBtn');
+  const messageEl = document.getElementById('message');
+  const hintEl = document.getElementById('hint');
+  const celebration = document.getElementById('celebration');
+  const sadEmojisEl = document.getElementById('sadEmojis');
+
+  const MAX_GROW_CLICKS = 10;
+  const SAD_EMOJIS = ['😢', '😭', '😔', '🥺', '💔', '😞'];
+  let noCount = 0;
+  let finalState = false;
+  let roamInterval = null;
+  let unblocked = false;
+
+  const messages = [
+    "I'm sorry for making you angry and sad. I really am sorry, NANA. Please unblock me 😢",
+    "Really? Come on…",
+    "Give me one more chance?",
+    "I promise I’ll be better.",
+    "Please reconsider… I miss you.",
+    "My heart actually hurts right now.",
+    "I think about you all the time.",
+    "Pretty, pretty please?",
+    "I’ll bring your favorite snacks, I swear.",
+    "Okay, this is getting desperate…",
+    "The ‘No’ button is too dizzy to sit still anymore. Yes is the only option left, NANA 🥺"
+  ];
+
+  function openEnvelope() {
+    envelopeScreen.style.opacity = '0';
+    envelopeScreen.style.pointerEvents = 'none';
+    setTimeout(() => {
+      envelopeScreen.style.display = 'none';
+      mainContainer.style.display = 'flex';
+      requestAnimationFrame(() => { mainContainer.style.opacity = '1'; });
+    }, 450);
+  }
+
+  envelopeBtn.addEventListener('click', openEnvelope);
+  envelopeBtn.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEnvelope(); }
+  });
+
+  function updateMessage() {
+    const idx = Math.min(noCount, messages.length - 1);
+    messageEl.textContent = messages[idx];
+  }
+
+  function growYes() {
+    const step = Math.min(noCount, MAX_GROW_CLICKS);
+    const scale = 1 + step * 0.2;
+    yesBtn.style.transform = `scale(${scale})`;
+  }
+
+  function shakeNo() {
+    noBtn.animate(
+      [
+        { transform: 'translateX(0)' },
+        { transform: 'translateX(-6px)' },
+        { transform: 'translateX(6px)' },
+        { transform: 'translateX(0)' }
+      ],
+      { duration: 280 }
+    );
+  }
+
+  function spawnSadEmojis(count) {
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('span');
+      el.className = 'sad-emoji';
+      el.textContent = SAD_EMOJIS[Math.floor(Math.random() * SAD_EMOJIS.length)];
+      el.style.left = Math.random() * 92 + '%';
+      el.style.top = Math.random() * 88 + '%';
+      el.style.fontSize = (20 + Math.random() * 26) + 'px';
+      el.style.animationDuration = (2.2 + Math.random() * 2.4) + 's';
+      el.style.animationDelay = (Math.random() * 2) + 's';
+      sadEmojisEl.appendChild(el);
+    }
+  }
+
+  function moveNoRandom() {
+    const rect = noBtn.getBoundingClientRect();
+    const maxX = Math.max(window.innerWidth - rect.width - 10, 10);
+    const maxY = Math.max(window.innerHeight - rect.height - 10, 10);
+    noBtn.style.left = Math.random() * maxX + 'px';
+    noBtn.style.top = Math.random() * maxY + 'px';
+  }
+
+  function startFinalState() {
+    if (finalState) return;
+    finalState = true;
+    noBtn.style.transform = 'none';
+    noBtn.textContent = '😵‍💫 No';
+    noBtn.classList.add('spinning', 'roaming');
+    noBtn.style.pointerEvents = 'none';
+    noBtn.tabIndex = -1;
+    noBtn.setAttribute('aria-disabled', 'true');
+    hintEl.textContent = "Too dizzy to catch — just tap Yes 💗";
+    spawnSadEmojis(16);
+    moveNoRandom();
+    roamInterval = setInterval(moveNoRandom, 700);
+    window.addEventListener('resize', moveNoRandom);
+  }
+
+  noBtn.addEventListener('click', () => {
+    noCount++;
+    growYes();
+    shakeNo();
+    updateMessage();
+    if (noCount >= MAX_GROW_CLICKS) {
+      startFinalState();
+    }
+  });
+
+  function spawnHearts() {
+    const hearts = ['❤️', '💖', '💕', '💗', '💓'];
+    for (let i = 0; i < 30; i++) {
+      const h = document.createElement('div');
+      h.className = 'heart';
+      h.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+      h.style.left = Math.random() * 100 + 'vw';
+      h.style.animationDuration = (3 + Math.random() * 3) + 's';
+      h.style.animationDelay = (Math.random() * 3) + 's';
+      h.style.fontSize = (16 + Math.random() * 20) + 'px';
+      celebration.appendChild(h);
+    }
+  }
+
+  function celebrate() {
+    if (unblocked) return;
+    unblocked = true;
+    if (roamInterval) clearInterval(roamInterval);
+    mainContainer.style.opacity = '0';
+    setTimeout(() => {
+      celebration.classList.add('show');
+      spawnHearts();
+    }, 400);
+  }
+
+  yesBtn.addEventListener('click', celebrate);
+</script>
+
+</body>
+</html>
